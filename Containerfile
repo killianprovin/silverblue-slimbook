@@ -95,7 +95,7 @@ EOF
 # QoL tooling
 RUN <<-EOF
     set -euxo pipefail
-    dnf install -y --setopt=install_weak_deps=False just distrobox ptyxis
+    dnf install -y --setopt=install_weak_deps=False just distrobox
     dnf clean all
 EOF
 

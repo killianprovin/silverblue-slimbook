@@ -11,7 +11,7 @@ Custom [Fedora Silverblue](https://fedoraproject.org/silverblue/) image for the 
 - **[Tailscale](https://tailscale.com/)** — mesh VPN
 - **[VS Code](https://code.visualstudio.com/)** — official Microsoft RPM
 - **YubiKey GPG** — `pcsc-lite` enabled for smart card support
-- **QoL tooling** — `just`, `distrobox`, `ptyxis`
+- **QoL tooling** — `just`, `distrobox`
 
 ## Usage
 
