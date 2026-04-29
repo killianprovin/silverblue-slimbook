@@ -60,7 +60,16 @@ RUN <<-EOF
 EOF
 
 # YubiKey GPG smart card
-RUN systemctl enable pcscd.socket
+RUN <<-EOF
+    set -euxo pipefail
+    mkdir -p /etc/systemd/system/pcscd.service.d
+    cat > /etc/systemd/system/pcscd.service.d/no-auto-exit.conf <<'CONF'
+[Service]
+ExecStart=
+ExecStart=/usr/bin/pcscd --foreground
+CONF
+    systemctl enable pcscd.socket
+EOF
 
 # Tailscale VPN
 RUN <<-EOF
