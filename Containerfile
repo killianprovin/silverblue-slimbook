@@ -71,6 +71,13 @@ CONF
     systemctl enable pcscd.socket
 EOF
 
+# YubiKey FIDO2 PAM auth
+RUN <<-EOF
+	set -eux
+	dnf install -y pam-u2f pamu2fcfg
+	dnf clean all
+EOF
+
 # Tailscale VPN
 RUN <<-EOF
     set -euxo pipefail
