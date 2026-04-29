@@ -1,0 +1,30 @@
+name: Cleanup old container images
+
+on:
+  schedule:
+    - cron: '0 3 * * 0'
+  workflow_dispatch:
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+
+    steps:
+      - name: Delete old untagged images
+        uses: actions/delete-package-versions@v5
+        with:
+          package-name: silverblue-slimbook
+          package-type: container
+          min-versions-to-keep: 5
+          delete-only-untagged-versions: true
+
+      - name: Delete old tagged images (keep recent)
+        uses: actions/delete-package-versions@v5
+        with:
+          package-name: silverblue-slimbook
+          package-type: container
+          min-versions-to-keep: 10
+          delete-only-pre-release-versions: false
+          ignore-versions: '^(latest|stable|f44)$'

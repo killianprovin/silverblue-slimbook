@@ -1,0 +1,152 @@
+name: Build and Push Silverblue Slimbook Image
+
+on:
+  schedule:
+    - cron: '0 6 * * *'
+    - cron: '0 18 * * *'
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      force_build:
+        description: 'Force rebuild even if base image unchanged'
+        required: false
+        default: false
+        type: boolean
+
+env:
+  IMAGE_NAME: silverblue-slimbook
+  IMAGE_REGISTRY: ghcr.io/${{ github.repository_owner }}
+  BASE_IMAGE: quay.io/fedora-ostree-desktops/silverblue
+  BASE_TAG: '44'
+  # Slimbook OBS repo version. TODO: bump to 44 once published.
+  SLIMBOOK_FEDORA: '43'
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    outputs:
+      should_build: ${{ steps.check.outputs.should_build }}
+      base_digest: ${{ steps.versions.outputs.base_digest }}
+      base_version: ${{ steps.versions.outputs.base_version }}
+      slimbook_hash: ${{ steps.versions.outputs.slimbook_hash }}
+
+    steps:
+      - name: Inspect upstream versions
+        id: versions
+        run: |
+          BASE_DIGEST=$(skopeo inspect docker://${BASE_IMAGE}:${BASE_TAG} | jq -r '.Digest')
+          BASE_VERSION=$(skopeo inspect docker://${BASE_IMAGE}:${BASE_TAG} | jq -r '.Labels["ostree.linux"]')
+          echo "base_digest=${BASE_DIGEST}" >> $GITHUB_OUTPUT
+          echo "base_version=${BASE_VERSION}" >> $GITHUB_OUTPUT
+          echo "Upstream Silverblue digest: ${BASE_DIGEST}"
+          echo "Upstream Silverblue version: ${BASE_VERSION}"
+
+          SLIMBOOK_HASH=$(podman run --rm fedora:${SLIMBOOK_FEDORA} bash -c "
+            dnf config-manager addrepo --from-repofile=https://download.opensuse.org/repositories/home:/Slimbook/Fedora_${SLIMBOOK_FEDORA}/home:Slimbook.repo 2>/dev/null
+            dnf repoquery --latest-limit=1 \
+              slimbook-meta-common \
+              slimbook-meta-executive \
+              slimbook-meta-gnome \
+              slimbook-service \
+              slimbook-yt6801-kmod \
+              slimbook-yt6801-kmod-common \
+              --qf '%{name}-%{version}-%{release}' 2>/dev/null
+          " | sort | sha256sum | cut -d' ' -f1)
+          echo "slimbook_hash=${SLIMBOOK_HASH}" >> $GITHUB_OUTPUT
+          echo "Slimbook packages hash: ${SLIMBOOK_HASH}"
+
+      - name: Decide whether to build
+        id: check
+        run: |
+          if [[ "${{ github.event.inputs.force_build }}" == "true" ]]; then
+            echo "Force build requested"
+            echo "should_build=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          if [[ "${{ github.event_name }}" == "push" ]]; then
+            echo "Push event - rebuilding"
+            echo "should_build=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          OUR_BASE_DIGEST=$(skopeo inspect docker://${IMAGE_REGISTRY}/${IMAGE_NAME}:latest 2>/dev/null \
+            | jq -r '.Labels["org.opencontainers.image.base.digest"]' || echo "not-found")
+          OUR_SLIMBOOK_HASH=$(skopeo inspect docker://${IMAGE_REGISTRY}/${IMAGE_NAME}:latest 2>/dev/null \
+            | jq -r '.Labels["slimbook.packages.hash"]' || echo "not-found")
+
+          echo "Our base digest:     ${OUR_BASE_DIGEST}"
+          echo "Upstream digest:     ${{ steps.versions.outputs.base_digest }}"
+          echo "Our slimbook hash:   ${OUR_SLIMBOOK_HASH}"
+          echo "Current slimbook:    ${{ steps.versions.outputs.slimbook_hash }}"
+
+          if [[ "${OUR_BASE_DIGEST}" != "${{ steps.versions.outputs.base_digest }}" ]]; then
+            echo "Base image changed or our image doesn't exist - rebuilding"
+            echo "should_build=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          if [[ "${OUR_SLIMBOOK_HASH}" != "${{ steps.versions.outputs.slimbook_hash }}" ]]; then
+            echo "Slimbook packages changed - rebuilding"
+            echo "should_build=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          echo "Nothing changed - skipping build"
+          echo "should_build=false" >> $GITHUB_OUTPUT
+
+  build:
+    runs-on: ubuntu-latest
+    needs: check
+    if: needs.check.outputs.should_build == 'true'
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Generate image metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=latest
+            type=raw,value=stable
+            type=raw,value=f${{ env.BASE_TAG }}
+            type=sha,prefix=
+
+      - name: Build and push image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Containerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          build-args: |
+            BASE_IMAGE=${{ env.BASE_IMAGE }}
+            BASE_TAG=${{ env.BASE_TAG }}
+            SLIMBOOK_DIGEST=${{ needs.check.outputs.slimbook_hash }}
+          secrets: |
+            mok_priv=${{ secrets.MOK_PRIVATE_KEY_B64 }}
+            mok_der=${{ secrets.MOK_PUBLIC_KEY_B64 }}
+          labels: |
+            org.opencontainers.image.title=Silverblue Slimbook Executive
+            org.opencontainers.image.description=Custom Silverblue with Slimbook Executive laptop support
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            io.artifacthub.package.readme-url=https://raw.githubusercontent.com/${{ github.repository }}/main/README.md
+            org.opencontainers.image.base.name=${{ env.BASE_IMAGE }}:${{ env.BASE_TAG }}
+            org.opencontainers.image.base.digest=${{ needs.check.outputs.base_digest }}
+            slimbook.packages.hash=${{ needs.check.outputs.slimbook_hash }}
