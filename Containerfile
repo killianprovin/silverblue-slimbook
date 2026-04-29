@@ -60,12 +60,7 @@ RUN <<-EOF
 EOF
 
 # YubiKey GPG smart card
-RUN <<-EOF
-    set -euxo pipefail
-    dnf install -y --setopt=install_weak_deps=False pcsc-lite
-    systemctl enable pcscd.socket
-    dnf clean all
-EOF
+RUN systemctl enable pcscd.socket
 
 # Tailscale VPN
 RUN <<-EOF
