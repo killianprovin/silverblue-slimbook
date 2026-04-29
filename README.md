@@ -7,11 +7,10 @@ Custom [Fedora Silverblue](https://fedoraproject.org/silverblue/) image for the 
 ## What's included
 
 - **Slimbook hardware support** — `slimbook-service`, GNOME integration, and the `yt6801` Ethernet kernel module
-- **[keyd](https://github.com/rvaiya/keyd)** — system-wide key remapping
-- **[Tailscale](https://tailscale.com/)** — mesh VPN
-- **[VS Code](https://code.visualstudio.com/)** — official Microsoft RPM
-- **YubiKey GPG** — `pcsc-lite` enabled for smart card support
-- **QoL tooling** — `just`, `distrobox`
+- **[keyd](https://github.com/rvaiya/keyd)**
+- **[Tailscale](https://tailscale.com/)**
+- **YubiKey GPG**
+- **[Distrobox](https://distrobox.it/)**
 
 ## Usage
 

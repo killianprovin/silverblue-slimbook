@@ -71,26 +71,10 @@ RUN <<-EOF
     dnf clean all
 EOF
 
-# VS Code
+# Distrobox
 RUN <<-EOF
     set -euxo pipefail
-    rpm --import https://packages.microsoft.com/keys/microsoft.asc
-    cat > /etc/yum.repos.d/vscode.repo << 'REPO'
-[code]
-name=Visual Studio Code
-baseurl=https://packages.microsoft.com/yumrepos/vscode
-enabled=1
-gpgcheck=1
-gpgkey=https://packages.microsoft.com/keys/microsoft.asc
-REPO
-    dnf install -y --setopt=install_weak_deps=False code
-    dnf clean all
-EOF
-
-# QoL tooling
-RUN <<-EOF
-    set -euxo pipefail
-    dnf install -y --setopt=install_weak_deps=False just distrobox
+    dnf install -y --setopt=install_weak_deps=False distrobox
     dnf clean all
 EOF
 
