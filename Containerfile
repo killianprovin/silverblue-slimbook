@@ -132,46 +132,6 @@ RUN <<-EOF
 	dnf clean all
 EOF
 
-# GNOME Shell Extensions (Caffeine + GSConnect)
-RUN <<-EOF
-	set -euxo pipefail
-	dnf install -y --setopt=install_weak_deps=False \
-		gnome-shell-extension-caffeine \
-		gnome-shell-extension-gsconnect
-	dnf clean all
-EOF
-
-# GSConnect firewall ports (KDE Connect protocol)
-RUN <<-EOF
-	set -euxo pipefail
-	dnf install -y --setopt=install_weak_deps=False firewalld
-	mkdir -p /etc/firewalld/services
-	cat > /etc/firewalld/services/gsconnect.xml <<'XML'
-	<?xml version="1.0" encoding="utf-8"?>
-	<service>
-	  <short>GSConnect</short>
-	  <description>KDE Connect protocol for GSConnect</description>
-	  <port protocol="tcp" port="1716"/>
-	  <port protocol="udp" port="1716"/>
-	</service>
-	XML
-	dnf clean all
-EOF
-
-# Bump shell-version to include GNOME 50 for Caffeine + GSConnect
-RUN <<-EOF
-	set -euxo pipefail
-	dnf install -y --setopt=install_weak_deps=False jq
-	for ext in caffeine@patapon.info gsconnect@andyholmes.github.io; do
-		meta="/usr/share/gnome-shell/extensions/${ext}/metadata.json"
-		tmp=$(mktemp)
-		jq '."shell-version" |= (. + ["50"] | unique)' "${meta}" > "${tmp}"
-		mv "${tmp}" "${meta}"
-	done
-	dnf remove -y jq
-	dnf clean all
-EOF
-
 # Branding
 ARG SLIMBOOK_DIGEST=unknown
 RUN <<-EOF
