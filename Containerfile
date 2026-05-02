@@ -114,6 +114,14 @@ RUN <<-EOF
 	dnf clean all
 EOF
 
+# Tor service
+RUN <<-EOF
+	set -euxo pipefail
+	dnf install -y --setopt=install_weak_deps=False tor
+	systemctl enable tor
+	dnf clean all
+EOF
+
 # Distrobox
 RUN <<-EOF
 	set -euxo pipefail
