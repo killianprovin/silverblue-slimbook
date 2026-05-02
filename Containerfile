@@ -119,7 +119,7 @@ RUN <<-EOF
 	set -euxo pipefail
 	dnf install -y --setopt=install_weak_deps=False tor
 
-	printf 'd /var/lib/tor 0700 toranon toranon - -\nd /var/log/tor 0700 toranon toranon - -\n' > /etc/tmpfiles.d/tor-bootc.conf
+	printf 'd /var/lib/tor 0700 toranon toranon - -\nd /var/log/tor 0700 toranon toranon - -\n' > /usr/lib/tmpfiles.d/tor-bootc.conf
 
 	systemctl enable tor
 	dnf clean all
