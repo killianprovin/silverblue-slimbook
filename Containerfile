@@ -119,16 +119,7 @@ RUN <<-EOF
 	set -euxo pipefail
 	dnf install -y --setopt=install_weak_deps=False tor
 
-	mkdir -p /etc/systemd/system/tor.service.d
-	cat > /etc/systemd/system/tor.service.d/10-statedir.conf <<'DROPIN'
-	[Service]
-	RuntimeDirectory=tor
-	RuntimeDirectoryMode=0750
-	StateDirectory=tor
-	StateDirectoryMode=0700
-	LogsDirectory=tor
-	LogsDirectoryMode=0700
-	DROPIN
+	printf 'd /var/lib/tor 0700 toranon toranon - -\nd /var/log/tor 0700 toranon toranon - -\n' > /etc/tmpfiles.d/tor.conf
 
 	systemctl enable tor
 	dnf clean all
