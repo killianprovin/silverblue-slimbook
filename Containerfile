@@ -158,6 +158,20 @@ RUN <<-EOF
 	dnf clean all
 EOF
 
+# Bump shell-version to include GNOME 50 for Caffeine + GSConnect
+RUN <<-EOF
+	set -euxo pipefail
+	dnf install -y --setopt=install_weak_deps=False jq
+	for ext in caffeine@patapon.info gsconnect@andyholmes.github.io; do
+		meta="/usr/share/gnome-shell/extensions/${ext}/metadata.json"
+		tmp=$(mktemp)
+		jq '."shell-version" |= (. + ["50"] | unique)' "${meta}" > "${tmp}"
+		mv "${tmp}" "${meta}"
+	done
+	dnf remove -y jq
+	dnf clean all
+EOF
+
 # Branding
 ARG SLIMBOOK_DIGEST=unknown
 RUN <<-EOF
