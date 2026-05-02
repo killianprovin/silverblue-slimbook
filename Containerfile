@@ -118,6 +118,12 @@ EOF
 RUN <<-EOF
 	set -euxo pipefail
 	dnf install -y --setopt=install_weak_deps=False tor
+
+	cat > /etc/tmpfiles.d/tor.conf <<'TMPFILES'
+	d /var/lib/tor 0700 toranon toranon - -
+	d /var/log/tor 0700 toranon toranon - -
+	TMPFILES
+
 	systemctl enable tor
 	dnf clean all
 EOF
