@@ -110,7 +110,9 @@ RUN <<-EOF
     set -euxo pipefail
     dnf install -y --setopt=install_weak_deps=False \
         gnome-shell-extension-gsconnect \
-        gnome-shell-extension-caffeine
+        gnome-shell-extension-caffeine \
+        gnome-shell-extension-blur-my-shell \
+        gnome-shell-extension-dash-to-dock
     dnf clean all
 EOF
 
