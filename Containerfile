@@ -112,7 +112,9 @@ RUN <<-EOF
         gnome-shell-extension-gsconnect \
         gnome-shell-extension-caffeine \
         gnome-shell-extension-blur-my-shell \
-        gnome-shell-extension-dash-to-dock
+        gnome-shell-extension-dash-to-dock \
+        gnome-shell-extension-just-perfection \
+        gnome-shell-extension-clipboard-indicator \
     dnf clean all
 EOF
 
