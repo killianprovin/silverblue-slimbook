@@ -10,7 +10,6 @@ Custom [Fedora Silverblue](https://fedoraproject.org/silverblue/) image for the 
 - **[keyd](https://github.com/rvaiya/keyd)** — key remapping daemon
 - **YubiKey** — GPG smart card support (`pcscd`) and FIDO2 PAM authentication (`pam-u2f`)
 - **[Tailscale](https://tailscale.com/)** — mesh VPN
-- **[Tor](https://www.torproject.org/)** — onion routing service
 - **[Distrobox](https://distrobox.it/)** — containerized dev environments
 - **GNOME extensions** — GSConnect, Caffeine, Blur My Shell, Dash to Dock, Just Perfection, Clipboard Indicator
 
