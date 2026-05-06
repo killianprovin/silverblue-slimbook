@@ -105,6 +105,15 @@ RUN <<-EOF
     dnf clean all
 EOF
 
+# GNOME extensions
+RUN <<-EOF
+    set -euxo pipefail
+    dnf install -y --setopt=install_weak_deps=False \
+        gnome-shell-extension-gsconnect \
+        gnome-shell-extension-caffeine
+    dnf clean all
+EOF
+
 # Branding
 ARG SLIMBOOK_DIGEST=unknown
 RUN <<-EOF
