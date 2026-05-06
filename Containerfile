@@ -22,28 +22,28 @@ RUN --mount=type=secret,id=mok_priv \
     chmod 1777 /tmp
     mkdir -p /var/lib/akmods
     chown akmods:akmods /var/lib/akmods
-    KVER=$(rpm -q kernel --qf '%{VERSION}-%{RELEASE}.%{ARCH}')
-    ARCH=$(uname -m)
-    SRPM=$(ls /usr/src/akmods/slimbook-yt6801-kmod-*.src.rpm)
+    KVER=\$(rpm -q kernel --qf '%{VERSION}-%{RELEASE}.%{ARCH}')
+    ARCH=\$(uname -m)
+    SRPM=\$(ls /usr/src/akmods/slimbook-yt6801-kmod-*.src.rpm)
     su -s /bin/bash akmods -c \
-"cd /var/lib/akmods && HOME=/var/lib/akmods akmodsbuild --target ${ARCH} --kernels ${KVER} ${SRPM}"
+"cd /var/lib/akmods && HOME=/var/lib/akmods akmodsbuild --target \${ARCH} --kernels \${KVER} \${SRPM}"
     dnf install -y /var/lib/akmods/kmod-slimbook-yt6801-*.rpm
     # Sign the kmod with the MOK key
     mkdir -p /tmp/keys
     base64 -d /run/secrets/mok_priv > /tmp/keys/mok.priv
     base64 -d /run/secrets/mok_der  > /tmp/keys/mok.der
     chmod 600 /tmp/keys/mok.priv
-    KO=$(find /usr/lib/modules/${KVER}/extra -name 'yt6801.ko*' | head -1)
-    if [[ "${KO}" == *.xz ]]; then
-        xz -d "${KO}"
-        KO="${KO%.xz}"
+    KO=\$(find /usr/lib/modules/\${KVER}/extra -name 'yt6801.ko*' | head -1)
+    if [[ "\${KO}" == *.xz ]]; then
+        xz -d "\${KO}"
+        KO="\${KO%.xz}"
     fi
-    /usr/src/kernels/${KVER}/scripts/sign-file \
-        sha256 /tmp/keys/mok.priv /tmp/keys/mok.der "${KO}"
+    /usr/src/kernels/\${KVER}/scripts/sign-file \
+        sha256 /tmp/keys/mok.priv /tmp/keys/mok.der "\${KO}"
     # Recompress signed module to save image space
-    xz -T0 "${KO}"
+    xz -T0 "\${KO}"
     rm -rf /tmp/keys
-    depmod -a "${KVER}"
+    depmod -a "\${KVER}"
     echo "yt6801" > /etc/modules-load.d/yt6801.conf
     dnf remove -y kernel-devel kernel-devel-matched akmods
     dnf clean all
@@ -73,9 +73,9 @@ EOF
 
 # YubiKey FIDO2 PAM auth
 RUN <<-EOF
-	set -eux
-	dnf install -y pam-u2f pamu2fcfg
-	dnf clean all
+    set -euxo pipefail
+    dnf install -y --setopt=install_weak_deps=False pam-u2f pamu2fcfg
+    dnf clean all
 EOF
 
 # Tailscale VPN
@@ -85,17 +85,6 @@ RUN <<-EOF
     dnf install -y --setopt=install_weak_deps=False tailscale
     systemctl enable tailscaled
     dnf clean all
-EOF
-
-# Tor service
-RUN <<-EOF
-	set -euxo pipefail
-	dnf install -y --setopt=install_weak_deps=False tor
-
-	printf 'd /var/lib/tor 0700 toranon toranon - -\nd /var/log/tor 0700 toranon toranon - -\n' > /usr/lib/tmpfiles.d/tor-bootc.conf
-
-	systemctl enable tor
-	dnf clean all
 EOF
 
 # Distrobox
@@ -122,10 +111,10 @@ EOF
 ARG SLIMBOOK_DIGEST=unknown
 RUN <<-EOF
     set -euxo pipefail
-    SLIMBOOK_SHORT=$(echo "${SLIMBOOK_DIGEST}" | cut -c1-12)
+    SLIMBOOK_SHORT=\$(echo "\${SLIMBOOK_DIGEST}" | cut -c1-12)
     sed -i \
         -e 's/^NAME=.*/NAME="Silverblue Slimbook Executive"/' \
-        -e "s/^PRETTY_NAME=.*/PRETTY_NAME=\"Silverblue Slimbook Executive (Slimbook ${SLIMBOOK_SHORT})\"/" \
+        -e "s/^PRETTY_NAME=.*/PRETTY_NAME=\\"Silverblue Slimbook Executive (Slimbook \${SLIMBOOK_SHORT})\\"/" \
         -e 's/^VARIANT_ID=.*/VARIANT_ID=silverblue-slimbook-executive/' \
         -e 's|^HOME_URL=.*|HOME_URL="https://github.com/killianprovin/silverblue-slimbook"|' \
         /usr/lib/os-release
