@@ -11,7 +11,7 @@ Custom [Fedora Silverblue](https://fedoraproject.org/silverblue/) image for the 
 - **YubiKey** — GPG smart card support (`pcscd`) and FIDO2 PAM authentication (`pam-u2f`)
 - **[Tailscale](https://tailscale.com/)** — mesh VPN
 - **[Distrobox](https://distrobox.it/)** — containerized dev environments
-- **GNOME extensions** — GSConnect, Caffeine, Blur My Shell, Dash to Dock, Just Perfection, Clipboard Indicator
+- **GNOME extensions** — GSConnect, Caffeine, Blur My Shell, Dash to Dock, Just Perfection
 
 ## Usage
 
