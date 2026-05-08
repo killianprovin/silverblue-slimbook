@@ -39,8 +39,13 @@ install -d -o akmods -g akmods /var/lib/akmods
 KVER=$(rpm -q kernel --qf '%{VERSION}-%{RELEASE}.%{ARCH}\n' | head -1)
 ARCH=$(uname -m)
 SRPM=$(ls /usr/src/akmods/slimbook-yt6801-kmod-*.src.rpm)
+
+# akmodsbuild requires a writable CWD; / is read-only in buildkit
+cd /var/lib/akmods
 runuser -u akmods -- env HOME=/var/lib/akmods \
     akmodsbuild --target "${ARCH}" --kernels "${KVER}" "${SRPM}"
+cd /
+
 dnf -y install /var/lib/akmods/kmod-slimbook-yt6801-*.rpm
 
 KO_XZ=$(find "/usr/lib/modules/${KVER}/extra" -name 'yt6801.ko.xz' -print -quit)
