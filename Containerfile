@@ -1,15 +1,18 @@
 # syntax=docker/dockerfile:1.7
 ARG BASE_IMAGE=quay.io/fedora-ostree-desktops/silverblue
 ARG BASE_TAG=44
-ARG SLIMBOOK_FEDORA=43
-ARG SLIMBOOK_DIGEST=unknown
 
 FROM ${BASE_IMAGE}:${BASE_TAG}
+
+ARG SLIMBOOK_FEDORA=43
+ARG SLIMBOOK_DIGEST=unknown
+ENV SLIMBOOK_FEDORA=${SLIMBOOK_FEDORA} \
+    SLIMBOOK_DIGEST=${SLIMBOOK_DIGEST}
 
 # Slimbook hardware: yt6801 akmod build + MOK signing
 RUN --mount=type=secret,id=mok_priv \
     --mount=type=secret,id=mok_der \
-    --mount=type=cache,target=/var/cache/libdnf5,sharing=locked,id=dnf-${BASE_TAG} \
+    --mount=type=cache,target=/var/cache/libdnf5,sharing=locked \
 <<'EOF'
 set -euxo pipefail
 echo 'install_weak_deps=False' >> /etc/dnf/dnf.conf
@@ -63,7 +66,7 @@ EOF
 
 # Userspace: keyd, YubiKey, Tailscale, Distrobox, GNOME extensions
 COPY config/keyd/default.conf /etc/keyd/default.conf
-RUN --mount=type=cache,target=/var/cache/libdnf5,sharing=locked,id=dnf-${BASE_TAG} \
+RUN --mount=type=cache,target=/var/cache/libdnf5,sharing=locked \
 <<'EOF'
 set -euxo pipefail
 
@@ -95,7 +98,7 @@ CONF
 EOF
 
 # Branding + cleanup + commit
-RUN <<EOF
+RUN <<'EOF'
 set -euxo pipefail
 
 SLIMBOOK_SHORT=$(echo "${SLIMBOOK_DIGEST}" | cut -c1-12)
